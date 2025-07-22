@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/naughtygopher/errors"
+	"github.com/naughtygopher/goapp/internal/pkg/logger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
@@ -70,7 +71,7 @@ func New(ctx context.Context, opts *Options) (*APM, error) {
 	s.meterProvider = mProvider
 	SetGlobal(s)
 
-	return s, nil
+	return Global(), nil
 }
 
 // Shutdown gracefully switch off apm, flushing any data it have
@@ -140,9 +141,7 @@ func SetGlobal(apm *APM) {
 // Global gets global apm instance
 func Global() *APM {
 	if global == nil {
-		apm, _ := New(context.Background(), &Options{UseStdOut: false})
-		global = apm
-		return apm
+		logger.Error(context.Background(), "APM access attempt before initialisation is a bug")
 	}
 	return global
 }
@@ -187,6 +186,9 @@ func newTracer(ctx context.Context, opts *Options) (trace.TracerProvider, *Trace
 
 	if opts.UseStdOut {
 		exporter, err = stdouttrace.New()
+	} else if opts.CollectorURL == "" {
+		// Using no-op tracer as CollectorURL was not set.
+		return nil, nil, nil
 	} else if httpCollector {
 		exporter, err = otlptracehttp.New(
 			ctx,

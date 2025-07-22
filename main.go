@@ -74,6 +74,9 @@ func main() {
 		}),
 	)
 
+	// This needs to remain after log initialisation and before server initialisation.
+	ap := startAPM(ctx, cfgs)
+
 	healthResponder, err := startHealthResponder(ctx, probestatus, fatalErr)
 	if err != nil {
 		panic(err)
@@ -93,7 +96,7 @@ func main() {
 		healthResponder,
 		hserver,
 		gserver,
-		startAPM(ctx, cfgs),
+		ap,
 	)
 	exitErr = <-fatalErr
 }

@@ -20,6 +20,7 @@ func NotifyErrorOnQuit(errs chan<- error, otherSignals ...syscall.Signal) {
 
 	for signalType := range interrupt {
 		switch signalType {
+		// CAUTION: syscall.SIGTSTP is not supported on Windows and go build will fail.
 		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGTSTP:
 			errs <- errors.Wrapf(ErrSigQuit, "%v", signalType)
 			return
